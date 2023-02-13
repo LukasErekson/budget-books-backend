@@ -5,7 +5,7 @@ import numpy as np
 from typing import Mapping
 from flask_restful import Resource
 from models.db_setup import DbSetup
-from .utils import dict_to_json, endpoint_error_wrapper
+from utils import dict_to_json, endpoint_error_wrapper
 from flask import request
 from models.transaction import Transaction
 
