@@ -7,9 +7,8 @@ from resources.transactions_resource import TransactionsResource
 from resources.user_resource import UserResource
 from resources.account_types_resource import AccountTypeResource
 
-from accounts.account_routes import (
-    accounts_routes,
-)
+from accounts.account_routes import accounts_routes
+from account_types.account_type_routes import account_type_routes
 
 from models.db_setup import DbSetup
 
@@ -37,9 +36,9 @@ def create_app(test_config: Mapping = None) -> Flask:
 
     api.add_resource(UserResource, "/api/users")
     api.add_resource(TransactionsResource, "/api/transactions")
-    api.add_resource(AccountTypeResource, "/api/accounttypes")
 
     app.register_blueprint(accounts_routes)
+    app.register_blueprint(account_type_routes)
 
     return app
 
