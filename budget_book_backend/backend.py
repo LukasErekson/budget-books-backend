@@ -5,10 +5,9 @@ from flask_restful import Api
 
 from resources.transactions_resource import TransactionsResource
 from resources.user_resource import UserResource
-from resources.account_types_resource import AccountTypeResource
 
-from accounts.account_routes import accounts_routes
-from account_types.account_type_routes import account_type_routes
+from accounts import accounts_routes
+from account_types import account_type_routes
 
 from models.db_setup import DbSetup
 
