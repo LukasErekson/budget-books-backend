@@ -67,9 +67,11 @@ def get_accounts():
     )
 
     return (
-        dict(
-            message="SUCCESS",
-            accounts=json.dumps(accounts),
+        json.dumps(
+            dict(
+                message="SUCCESS",
+                accounts=json.dumps(accounts),
+            )
         ),
         200,
     )

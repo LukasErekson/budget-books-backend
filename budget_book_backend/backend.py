@@ -3,11 +3,11 @@ from typing import Mapping
 from flask import Flask
 from flask_restful import Api
 
-from resources.transactions_resource import TransactionsResource
 from resources.user_resource import UserResource
 
 from accounts import accounts_routes
 from account_types import account_type_routes
+from transactions import transaction_routes
 
 from models.db_setup import DbSetup
 
@@ -34,10 +34,10 @@ def create_app(test_config: Mapping = None) -> Flask:
     api = Api(app)
 
     api.add_resource(UserResource, "/api/users")
-    api.add_resource(TransactionsResource, "/api/transactions")
 
     app.register_blueprint(accounts_routes)
     app.register_blueprint(account_type_routes)
+    app.register_blueprint(transaction_routes)
 
     return app
 

@@ -13,7 +13,7 @@ from utils import (
 
 account_type_routes: Blueprint = Blueprint("account_types", __name__)
 
-BASE_ACCOUNT_TYPE_URL: str = "/api/accounttypes/"
+BASE_ACCOUNT_TYPE_URL: str = "/api/accounttypes"
 
 
 @endpoint_error_wrapper
@@ -37,9 +37,11 @@ def account_types():
     account_types: dict = get_account_types(group)
 
     return (
-        dict(
-            message="SUCCESS",
-            account_types=account_types,
+        json.dumps(
+            dict(
+                message="SUCCESS",
+                account_types=account_types,
+            )
         ),
         200,
     )
