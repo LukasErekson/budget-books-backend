@@ -9,16 +9,18 @@ from flask import current_app
 class DbSetup:
     """Namespace for database setup functions"""
 
-    engine: Engine = None
+    engine: Engine
     Base = declarative_base()
-    Session: sqlaSession = None
+    Session: sqlaSession
 
     @classmethod
     def set_engine(cls):
         """Set the SQL Alchemy engine according to the given engine_name
         and rebind the session.
         """
-        DbSetup.engine = create_engine(current_app.config.get("DATABASE"))
+        DbSetup.engine = create_engine(
+            current_app.config.get("DATABASE"), echo=True
+        )
         DbSetup.Session = sessionmaker(bind=DbSetup.engine)
 
     @classmethod

@@ -4,6 +4,7 @@ from typing import Mapping
 from models.db_setup import DbSetup
 from utils import dict_to_json
 from models.transaction import Transaction
+from sqlalchemy import text
 
 
 def get_transactions_by_account(
@@ -28,18 +29,22 @@ def get_transactions_by_account(
 
     if len(account_ids) == 1:
         df = pd.read_sql_query(
-            f"""SELECT * FROM transactions
+            text(
+                f"""SELECT * FROM transactions
                 WHERE debit_account_id = {account_ids[0]}
-                    OR credit_account_id = {account_ids[0]}""",
-            DbSetup.engine,
+                    OR credit_account_id = {account_ids[0]}"""
+            ),
+            DbSetup.engine.connect(),
         )
 
     else:
         df = pd.read_sql_query(
-            f"""SELECT * FROM transactions
+            text(
+                f"""SELECT * FROM transactions
                 WHERE debit_account_id IN {tuple(account_ids)}
-                    OR credit_account_id IN {tuple(account_ids)}""",
-            DbSetup.engine,
+                    OR credit_account_id IN {tuple(account_ids)}"""
+            ),
+            DbSetup.engine.connect(),
         )
 
     if categorize_type == "uncategorized":

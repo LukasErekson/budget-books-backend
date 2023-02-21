@@ -1,7 +1,8 @@
 import pandas as pd
+from sqlalchemy import text
 from models.db_setup import DbSetup
-from utils import dict_to_json
 from models.account_type import AccountType
+from utils import dict_to_json
 
 
 def get_account_types(group: str = "all") -> dict:
@@ -25,7 +26,9 @@ def get_account_types(group: str = "all") -> dict:
     if group != "all":
         sql_statement += f" WHERE \"group\" = '{group}'"
 
-    df: pd.DataFrame = pd.read_sql_query(sql_statement, DbSetup.engine)
+    df: pd.DataFrame = pd.read_sql_query(
+        text(sql_statement), DbSetup.engine.connect()
+    )
 
     return dict_to_json(df.to_dict(), df.index)
 

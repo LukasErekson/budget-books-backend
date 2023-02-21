@@ -1,5 +1,6 @@
 import pandas as pd
 from datetime import datetime
+from sqlalchemy import text
 
 from utils import dict_to_json
 
@@ -42,7 +43,9 @@ def get_accounts_by_type(
         sql_statement += f""" WHERE account_type_id IN
         (SELECT id FROM account_types 
             WHERE name in {types})"""
-    df: pd.DataFrame = pd.read_sql_query(sql_statement, DbSetup.engine)
+    df: pd.DataFrame = pd.read_sql_query(
+        text(sql_statement), DbSetup.engine.connect()
+    )
 
     df["balance"] = 0.0
     df["start_date"] = datetime.strftime(balance_start_date, "%Y-%m-%d")
