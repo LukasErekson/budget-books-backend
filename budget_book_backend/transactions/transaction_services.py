@@ -142,10 +142,8 @@ def categorize_transactions(transactions: list[Mapping]) -> dict:
 
         for i, trxn in enumerate(transactions):
             try:
-                transaction: Transaction = (
-                    session.query(Transaction)
-                    .filter(Transaction.id == trxn["transaction_id"])
-                    .scalar()
+                transaction: Transaction = session.get(
+                    Transaction, trxn["transaction_id"]
                 )
 
                 if trxn["debit_or_credit"] == "debit":
@@ -189,10 +187,8 @@ def update_transactions(transactions: list[Mapping]) -> dict:
 
         for i, trxn in enumerate(transactions):
             try:
-                transaction: Transaction = (
-                    session.query(Transaction)
-                    .filter(Transaction.id == trxn["id"])
-                    .scalar()
+                transaction: Transaction = session.get(
+                    Transaction, trxn["transaction_id"]
                 )
 
                 transaction.name = trxn.get("name") or transaction.name
@@ -251,10 +247,8 @@ def remove_transactions(transaction_ids: list[int]) -> dict:
 
         for transaction_id in transaction_ids:
             try:
-                transaction: Transaction = (
-                    session.query(Transaction)
-                    .filter(Transaction.id == transaction_id)
-                    .one()
+                transaction: Transaction = session.get(
+                    Transaction, transaction_id
                 )
 
                 session.delete(transaction)

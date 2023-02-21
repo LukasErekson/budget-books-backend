@@ -1,7 +1,12 @@
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from models.transaction import Transaction
+    from models.account_type import AccountType
+
 from sqlalchemy import Boolean, String, ForeignKey
 from datetime import datetime
 from sqlalchemy.orm import relationship, mapped_column, Mapped
-from models.account_type import AccountType
 from models.db_setup import DbSetup
 
 
@@ -19,7 +24,7 @@ class Account(DbSetup.Base):
     account_type_id: Mapped[int] = mapped_column(
         ForeignKey("account_types.id"), nullable=False
     )
-    account_type: Mapped[AccountType] = relationship(
+    account_type: Mapped["AccountType"] = relationship(
         "AccountType",
         foreign_keys=[account_type_id],
         backref="accts",

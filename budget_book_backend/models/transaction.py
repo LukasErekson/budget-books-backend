@@ -1,3 +1,9 @@
+from typing import TYPE_CHECKING
+
+# Avoid circular imports but still use type checking.
+if TYPE_CHECKING:
+    from models.account import Account
+
 from sqlalchemy import Float, ForeignKey, String, DateTime
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from datetime import datetime
