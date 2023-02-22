@@ -1,9 +1,12 @@
-from sqlalchemy import Column, Boolean, Integer, String, ForeignKey
-from datetime import datetime
-from sqlalchemy.orm import relationship
-from models.account_type import AccountType
-from models.transaction import Transaction
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from models.transaction import Transaction
+    from models.account_type import AccountType
+
+from sqlalchemy import Boolean, String, ForeignKey
+from datetime import datetime
+from sqlalchemy.orm import relationship, mapped_column, Mapped
 from models.db_setup import DbSetup
 
 
@@ -16,15 +19,17 @@ class Account(DbSetup.Base):
 
     __tablename__ = "accounts"
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String(120))
-    account_type_id = Column(ForeignKey("account_types.id"), nullable=False)
-    account_type = relationship(
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(120))
+    account_type_id: Mapped[int] = mapped_column(
+        ForeignKey("account_types.id"), nullable=False
+    )
+    account_type: Mapped["AccountType"] = relationship(
         "AccountType",
         foreign_keys=[account_type_id],
         backref="accts",
     )
-    debit_inc = Column(Boolean)
+    debit_inc: Mapped[bool] = mapped_column(Boolean)
 
     # Also has properties debit_transactions and credit_transactions for
     # the transactions that change the account balance.
@@ -55,7 +60,7 @@ class Account(DbSetup.Base):
                 balance within the given timeframe.
         """
 
-        def transaction_filter(transaction: Transaction) -> float:
+        def transaction_filter(transaction) -> float:
             """Returns the amount of the transaction if within the given
             dates, otherwise returns 0.
 
@@ -97,7 +102,7 @@ class Account(DbSetup.Base):
         self,
         start_date: datetime = datetime(1, 1, 1),
         end_date: datetime = datetime.now(),
-    ) -> list[Transaction]:
+    ) -> list["Transaction"]:
         """Return a list of the uncategorized transactions within the
         given timeframe.
 
@@ -116,7 +121,7 @@ class Account(DbSetup.Base):
                 of transaction objects that are uncategorized.
         """
 
-        def transaction_filter(transaction: Transaction) -> bool:
+        def transaction_filter(transaction: "Transaction") -> bool:
             """Returns True if the transaction is within the given
             dates and is uncategorized, otherwise returns False.
 
@@ -141,7 +146,7 @@ class Account(DbSetup.Base):
 
             return False
 
-        uncategorized_transactions: list[Transaction] = list(
+        uncategorized_transactions: list["Transaction"] = list(
             filter(transaction_filter, self.credit_transactions)
         ) + list(filter(transaction_filter, self.debit_transactions))
 

@@ -1,5 +1,11 @@
-from sqlalchemy import Column, Float, ForeignKey, Integer, String, DateTime
-from sqlalchemy.orm import relationship
+from typing import TYPE_CHECKING
+
+# Avoid circular imports but still use type checking.
+if TYPE_CHECKING:
+    from models.account import Account
+
+from sqlalchemy import Float, ForeignKey, String, DateTime
+from sqlalchemy.orm import mapped_column, Mapped, relationship
 from datetime import datetime
 
 from models.db_setup import DbSetup
@@ -17,24 +23,32 @@ class Transaction(DbSetup.Base):
 
     __tablename__ = "transactions"
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String(120))
-    description = Column(String)
-    amount = Column(Float(precision=2))
-    debit_account_id = Column(ForeignKey("accounts.id"), nullable=True)
-    credit_account_id = Column(ForeignKey("accounts.id"), nullable=True)
-    debit_account = relationship(
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(120))
+    description: Mapped[str] = mapped_column(String)
+    amount: Mapped[float] = mapped_column(Float(precision=2))
+    debit_account_id: Mapped[int] = mapped_column(
+        ForeignKey("accounts.id"), nullable=True
+    )
+    credit_account_id: Mapped[int] = mapped_column(
+        ForeignKey("accounts.id"), nullable=True
+    )
+    debit_account: Mapped["Account"] = relationship(
         "Account",
         foreign_keys=[debit_account_id],
         backref="debit_transactions",
     )
-    credit_account = relationship(
+    credit_account: Mapped["Account"] = relationship(
         "Account",
         foreign_keys=[credit_account_id],
         backref="credit_transactions",
     )
-    transaction_date = Column(DateTime, default=datetime.now())
-    date_entered = Column(DateTime, default=datetime.now())
+    transaction_date: Mapped[DateTime] = mapped_column(
+        DateTime, default=datetime.now()
+    )
+    date_entered: Mapped[DateTime] = mapped_column(
+        DateTime, default=datetime.now()
+    )
 
     def __repr__(self):
         return (

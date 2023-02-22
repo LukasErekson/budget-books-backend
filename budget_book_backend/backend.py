@@ -1,9 +1,6 @@
 from os import path
 from typing import Mapping
 from flask import Flask
-from flask_restful import Api
-
-from resources.user_resource import UserResource
 
 from accounts import accounts_routes
 from account_types import account_type_routes
@@ -30,10 +27,6 @@ def create_app(test_config: Mapping = None) -> Flask:
     with app.app_context():
         DbSetup.set_engine()
         DbSetup.add_tables()
-
-    api = Api(app)
-
-    api.add_resource(UserResource, "/api/users")
 
     app.register_blueprint(accounts_routes)
     app.register_blueprint(account_type_routes)

@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String
 from models.db_setup import DbSetup
+from sqlalchemy import String
+from sqlalchemy.orm import mapped_column, Mapped
 
 
 class AccountType(DbSetup.Base):
@@ -10,6 +11,6 @@ class AccountType(DbSetup.Base):
 
     __tablename__ = "account_types"
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String(120), unique=True)
-    group = Column(String(120))
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(120), unique=True)
+    group: Mapped[str] = mapped_column(String(120))
