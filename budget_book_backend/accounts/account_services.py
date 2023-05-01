@@ -1,16 +1,19 @@
-import pandas as pd
 from datetime import datetime
+from typing import Optional
+
+import pandas as pd
 from sqlalchemy import text
 
-from utils import dict_to_json
-
-from models.account import Account
-from models.account_type import AccountType
-from models.db_setup import DbSetup
+from budget_book_backend.models.account import Account
+from budget_book_backend.models.account_type import AccountType
+from budget_book_backend.models.db_setup import DbSetup
+from budget_book_backend.utils import dict_to_json
 
 
 def get_accounts_by_type(
-    types: list[str], balance_start_date: datetime, balance_end_date: datetime
+    types: tuple[str, ...],
+    balance_start_date: datetime,
+    balance_end_date: datetime,
 ) -> list[dict]:
     """Select and return all of the accounts within the types list with
     balances calculated between the start date and end date.
@@ -41,7 +44,7 @@ def get_accounts_by_type(
                 WHERE name = '{types}')"""
     elif types:
         sql_statement += f""" WHERE account_type_id IN
-        (SELECT id FROM account_types 
+        (SELECT id FROM account_types
             WHERE name in {types})"""
     df: pd.DataFrame = pd.read_sql_query(
         text(sql_statement), DbSetup.engine.connect()
@@ -114,12 +117,20 @@ def add_new_account_to_db(
                 session.add(new_acct_type)
                 session.commit()
 
-                account_type_id = (
+                new_account_type: Optional[AccountType] = (
                     session.query(AccountType)
                     .filter(AccountType.name == account_type_label)
                     .first()
-                    .id
                 )
+
+                if new_account_type is None:
+                    raise Exception(
+                        "The new AccountType ID could not be found. \
+                        There may have been a problem saving it to the \
+                        database."
+                    )
+
+                account_type_id = new_account_type.id
 
             new_acct: Account = Account(
                 name=name,
@@ -136,7 +147,7 @@ def add_new_account_to_db(
         except Exception as e:
             return dict(
                 message="There was a problem posting the new account.",
-                error=str(e),
+                serverError=str(e),
             )
 
     return dict(
@@ -163,7 +174,6 @@ def account_balances(account_ids: list[int]) -> dict:
     id_to_balance: dict = dict()
 
     with DbSetup.Session() as session:
-
         for id in account_ids:
             account: Account = (
                 session.query(Account).filter(Account.id == id).scalar()

@@ -3,9 +3,34 @@ Utility functions to be used to help with backend operations.
 """
 import json
 from typing import Callable, Tuple
+from flask import request
+from pandas import Index
 
 
-def dict_to_json(dictionary: dict, id_range: range) -> list[dict]:
+def validate_and_get_json() -> dict:
+    """Raises an exception if the request's JSON object ends up being
+    None. Used for MyPy validation.
+
+
+    Returns
+    -------
+        (dict) : The resulting JSON body of the current request (in
+            context of the Flask app).
+
+    Raises
+    ------
+        (Exception) when the call to get_json returns None.
+    """
+    if not request.get_json():
+        raise Exception(
+            "JSON body of the request was not found."
+            "Please ensure that the request body is valid JSON."
+        )
+
+    return dict(request.get_json())
+
+
+def dict_to_json(dictionary: dict, id_range: range | Index) -> list[dict]:
     """Convert a given dictionary (from a pandas dataframe) to one that
     is in more standard JSON format.
     i.e - An array of objects (dicts) instead of mapping

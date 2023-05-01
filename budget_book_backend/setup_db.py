@@ -1,12 +1,12 @@
-from models.db_setup import DbSetup
+from budget_book_backend.models.db_setup import DbSetup
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models.account import Account
-from models.account_type import AccountType
-from models.transaction import Transaction
+from budget_book_backend.models.account import Account
+from budget_book_backend.models.account_type import AccountType
+from budget_book_backend.models.transaction import Transaction
 
 
-def main(file_name: str, test: bool = True):
+def main(file_name: str, test: bool = True) -> None:
     """Create a Database and add the models (tables) to it."""
     DbSetup.engine = create_engine("sqlite:///" + file_name)
     DbSetup.Session = sessionmaker(bind=DbSetup.engine)

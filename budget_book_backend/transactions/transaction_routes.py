@@ -2,7 +2,7 @@ from flask import Blueprint, request
 
 import json
 from typing import Mapping
-from utils import endpoint_error_wrapper
+from budget_book_backend.utils import endpoint_error_wrapper
 
 from .transaction_services import (
     get_transactions_by_account,
@@ -27,7 +27,8 @@ def get_transactions():
     Example of arguments:
         ?account_ids=1,2
     """
-    account_ids: list[int] = request.args["account_ids"].split(",")
+    account_ids_str: list[str] = request.args["account_ids"].split(",")
+    account_ids: list[int] = list(map(int, account_ids_str))
     categorize_type: str = request.args.get("categorize_type", "all")
 
     if len(account_ids) == 0:

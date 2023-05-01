@@ -3,6 +3,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session as sqlaSession
 
+from os import path
 from flask import current_app
 
 
@@ -11,16 +12,21 @@ class DbSetup:
 
     engine: Engine
     Base = declarative_base()
-    Session: sqlaSession
+    Session: sessionmaker[sqlaSession]
 
     @classmethod
     def set_engine(cls):
         """Set the SQL Alchemy engine according to the given engine_name
         and rebind the session.
         """
-        DbSetup.engine = create_engine(
-            current_app.config.get("DATABASE"), echo=True
+        database_url: str = current_app.config.get(
+            "DATABASE",
+            "sqlite:///"
+            + path.join(
+                path.dirname(__file__), "models/databases/database.db"
+            ),
         )
+        DbSetup.engine = create_engine(database_url, echo=True)
         DbSetup.Session = sessionmaker(bind=DbSetup.engine)
 
     @classmethod

@@ -1,4 +1,4 @@
-from models.db_setup import DbSetup
+from .db_setup import DbSetup
 from sqlalchemy import String
 from sqlalchemy.orm import mapped_column, Mapped
 

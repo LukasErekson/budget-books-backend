@@ -1,15 +1,19 @@
 from os import path
-from typing import Mapping
+from typing import Mapping, Optional
 from flask import Flask
 
-from accounts import accounts_routes
-from account_types import account_type_routes
-from transactions import transaction_routes
+from budget_book_backend.accounts.account_routes import accounts_routes
+from budget_book_backend.account_types.account_type_routes import (
+    account_type_routes,
+)
+from budget_book_backend.transactions.transaction_routes import (
+    transaction_routes,
+)
 
-from models.db_setup import DbSetup
+from budget_book_backend.models.db_setup import DbSetup
 
 
-def create_app(test_config: Mapping = None) -> Flask:
+def create_app(test_config: Optional[Mapping] = None) -> Flask:
     """Flask app function factory definition"""
     app = Flask(__name__)
 

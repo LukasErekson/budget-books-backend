@@ -9,9 +9,15 @@ python = "^3.10"
 Flask = "^2.2.2"
 sqlalchemy = "^2.0.0"
 pandas = "^2.0.0"
+pandas-stubs = "^2.0.0.230412"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.scripts]
+backend = "budget_book_backend.backend:main"
+
+[tool.poetry.group.dev.dependencies]
 pytest = "^5.2"
+black = "^23.3.0"
+mypy = "^1.2.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -1,13 +1,13 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from models.transaction import Transaction
-    from models.account_type import AccountType
+    from .transaction import Transaction
+    from .account_type import AccountType
 
 from sqlalchemy import Boolean, String, ForeignKey
 from datetime import datetime
 from sqlalchemy.orm import relationship, mapped_column, Mapped
-from models.db_setup import DbSetup
+from .db_setup import DbSetup
 
 
 class Account(DbSetup.Base):
@@ -135,7 +135,10 @@ class Account(DbSetup.Base):
                 (bool) : Whether the transaction is within the given
                     dates or not.
             """
-            t_date = transaction.transaction_date
+            # Required type conversion for mypy type checking
+            t_date: datetime = datetime.fromisoformat(
+                str(transaction.transaction_date)
+            )
             if t_date >= start_date and t_date <= end_date:
                 # Since it's associated with this account, only one or
                 # the other will be None if uncategorized.

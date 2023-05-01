@@ -1,14 +1,15 @@
 import json
 
+from typing import Optional
 from flask import Blueprint, request
-from typing import Mapping
 
-from account_types.account_type_services import (
+from budget_book_backend.account_types.account_type_services import (
     get_account_types,
     create_account_type,
 )
-from utils import (
+from budget_book_backend.utils import (
     endpoint_error_wrapper,
+    validate_and_get_json,
 )
 
 account_type_routes: Blueprint = Blueprint("account_types", __name__)
@@ -34,7 +35,7 @@ def account_types():
     """
     group: str = request.args.get("group", "all")
 
-    account_types: dict = get_account_types(group)
+    account_types: list[dict] = get_account_types(group)
 
     return (
         json.dumps(
@@ -65,8 +66,8 @@ def add_new_account_type():
         "group": "Assets"
     }
     """
-    request_json: Mapping = request.get_json()
-    name: str = request_json.get("name")
+    request_json = validate_and_get_json()
+    name: Optional[str] = request_json.get("name")
     group: str = request_json.get("group", "Misc.")
 
     if name is None:

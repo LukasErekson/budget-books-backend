@@ -1,11 +1,11 @@
 import pandas as pd
 from sqlalchemy import text
-from models.db_setup import DbSetup
-from models.account_type import AccountType
-from utils import dict_to_json
+from budget_book_backend.models.db_setup import DbSetup
+from budget_book_backend.models.account_type import AccountType
+from budget_book_backend.utils import dict_to_json
 
 
-def get_account_types(group: str = "all") -> dict:
+def get_account_types(group: str = "all") -> list[dict]:
     """Return all the account types, with their names and groups,
     with the requested group type. If no group type is given, it
     returns all of them.
