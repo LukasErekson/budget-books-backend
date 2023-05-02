@@ -6,7 +6,7 @@ authors = ["Lukas <Lukas.Erekson@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-Flask = "^2.2.2"
+Flask = "^2.3.2"
 sqlalchemy = "^2.0.0"
 pandas = "^2.0.0"
 pandas-stubs = "^2.0.0.230412"
