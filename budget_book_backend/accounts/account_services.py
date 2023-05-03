@@ -11,7 +11,7 @@ from budget_book_backend.utils import dict_to_json
 
 
 def get_accounts_by_type(
-    types: tuple[str, ...],
+    types: tuple[str, ...] | str,
     balance_start_date: datetime,
     balance_end_date: datetime,
 ) -> list[dict]:
@@ -36,6 +36,9 @@ def get_accounts_by_type(
 
     """
     sql_statement: str = """SELECT * FROM accounts"""
+
+    if len(types) == 1:
+        types = types[0]
 
     if isinstance(types, str):
         if types != "all":
