@@ -23,8 +23,6 @@ def create_app(test_config: Optional[Mapping] = None) -> Flask:
         + path.join(path.dirname(__file__), "models/databases/database.db"),
     )
 
-    print(app.config.get("DATABASE"))
-
     if test_config:
         app.config.from_mapping(test_config)
 

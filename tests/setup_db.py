@@ -1,15 +1,13 @@
 from budget_book_backend.models.db_setup import DbSetup
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from budget_book_backend.models.account import Account
 from budget_book_backend.models.account_type import AccountType
 from budget_book_backend.models.transaction import Transaction
 
 
-def main(file_name: str, test: bool = True) -> None:
+def setup_db(test: bool = True) -> None:
     """Create a Database and add the models (tables) to it."""
-    DbSetup.engine = create_engine("sqlite:///" + file_name)
-    DbSetup.Session = sessionmaker(bind=DbSetup.engine)
+    # DbSetup.engine = create_engine("sqlite:///" + file_name)
+    # DbSetup.Session = sessionmaker(bind=DbSetup.engine)
     DbSetup.add_tables()
 
     if test:
@@ -47,10 +45,10 @@ def main(file_name: str, test: bool = True) -> None:
                 session.commit()
 
         # Liabilities
-        # with DbSetup.Session() as session:
-        #     for asset_name in ["Credit Card"]:
-        #         session.add(AccountType(name=asset_name, group="Liabilities"))
-        #         session.commit()
+        with DbSetup.Session() as session:
+            for asset_name in ["Credit Card"]:
+                session.add(AccountType(name=asset_name, group="Liabilities"))
+                session.commit()
 
         # Expenses
         with DbSetup.Session() as session:
@@ -92,4 +90,5 @@ def main(file_name: str, test: bool = True) -> None:
 
 
 if __name__ == "__main__":
-    main("budget_book_backend/models/databases/database.db", False)
+    setup_db(False)
+    # "budget_book_backend/models/databases/database.db"
