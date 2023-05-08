@@ -30,7 +30,7 @@ def client(app: Flask) -> FlaskClient:
 def use_test_db(app: Flask) -> Generator[None, Any, None]:
     """Set up, expose, and take down the database used for the tests."""
 
-    setup_db(test=True)
+    setup_db(test=False)
 
     with app.app_context():
         DbSetup.set_engine()

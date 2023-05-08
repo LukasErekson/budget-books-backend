@@ -1,7 +1,8 @@
 import pandas as pd
 from sqlalchemy import text
-from budget_book_backend.models.db_setup import DbSetup
+
 from budget_book_backend.models.account_type import AccountType
+from budget_book_backend.models.db_setup import DbSetup
 from budget_book_backend.utils import dict_to_json
 
 
@@ -48,6 +49,13 @@ def create_account_type(name: str, group: str = "Misc.") -> dict:
         (dict) : A dictionary with a message indicating whether or not
             an exception was thrown and the account type name.
     """
+    if not name:
+        return dict(
+            message="There was a problem posting the new account type.",
+            error="Cannot create an account type without a name.",
+            account_name=name,
+        )
+
     with DbSetup.Session() as session:
         try:
             new_acct_type: AccountType = AccountType(name=name, group=group)
