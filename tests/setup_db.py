@@ -1,7 +1,8 @@
-from budget_book_backend.models.db_setup import DbSetup
 from budget_book_backend.models.account import Account
 from budget_book_backend.models.account_type import AccountType
+from budget_book_backend.models.db_setup import DbSetup
 from budget_book_backend.models.transaction import Transaction
+from tests.test_data.account_type_test_data import ACCOUNT_TYPES
 
 
 def setup_db(test: bool = True) -> None:
@@ -10,83 +11,45 @@ def setup_db(test: bool = True) -> None:
     # DbSetup.Session = sessionmaker(bind=DbSetup.engine)
     DbSetup.add_tables()
 
+    with DbSetup.Session() as session:
+        for account_type_dict in ACCOUNT_TYPES:
+            session.add(
+                AccountType(
+                    name=account_type_dict["name"],
+                    group=account_type_dict["group"],
+                )
+            )
+        session.commit()
+
     if test:
-        credit_card = AccountType(name="Credit Card", group="Liabilities")
-        amex = Account(
-            name="AMEX",
-            debit_inc=False,
-            account_type_id=1,
-        )
-        trans1 = Transaction(
-            name="Test Transaction",
-            description="This is a test transaction",
-            amount=25.43,
-            credit_account_id=1,
-        )
-        payment1 = Transaction(
-            name="Auto Payment",
-            description="Auto pay",
-            amount=25.43,
-            debit_account_id=1,
-        )
+        from tests.test_data.account_test_data import ACCOUNTS
+        from tests.test_data.transaction_test_data import TRANSACTIONS
+
         with DbSetup.Session() as session:
-            session.add_all([credit_card, amex, trans1, payment1])
+            for account in ACCOUNTS:
+                session.add(
+                    Account(
+                        name=account["name"],
+                        debit_inc=account["debit_inc"],
+                        account_type_id=account["account_type_id"],
+                    )
+                )
+
             session.commit()
 
-    else:
-        # Basic Assets
-        with DbSetup.Session() as session:
-            for asset_name in [
-                "Checking Account",
-                "Savings Account",
-                "Roth IRA",
-            ]:
-                session.add(AccountType(name=asset_name, group="Assets"))
-                session.commit()
+            for transaction in TRANSACTIONS:
+                session.add(
+                    Transaction(
+                        name=transaction["name"],
+                        description=transaction["description"],
+                        amount=transaction["amount"],
+                        credit_account_id=transaction.get("credit_account_id"),
+                        debit_account_id=transaction.get("debit_account_id"),
+                        transaction_date=transaction["transaction_date"],
+                    )
+                )
 
-        # Liabilities
-        with DbSetup.Session() as session:
-            for asset_name in ["Credit Card"]:
-                session.add(AccountType(name=asset_name, group="Liabilities"))
-                session.commit()
-
-        # Expenses
-        with DbSetup.Session() as session:
-            for asset_name in [
-                "Groceries",
-                "Rent",
-                "Gas",
-                "Education",
-                "Entertainment",
-                "Doctor",
-                "Prescriptions",
-                "Therapy",
-                "Pet Expenses",
-                "Clothing",
-                "Gifts (Given)",
-                "Taxes",
-                "Travel",
-            ]:
-                session.add(AccountType(name=asset_name, group="Expenses"))
-                session.commit()
-
-        # Income
-        with DbSetup.Session() as session:
-            for asset_name in [
-                "Paycheck",
-                "Credit Card Rewards",
-                "Interest Income",
-                "Reimbursement",
-                "Gifts (Received)",
-            ]:
-                session.add(AccountType(name=asset_name, group="Income"))
-                session.commit()
-
-        # Equity
-        with DbSetup.Session() as session:
-            for asset_name in ["Opening Balance Equity"]:
-                session.add(AccountType(name=asset_name, group="Equity"))
-                session.commit()
+            session.commit()
 
 
 if __name__ == "__main__":
