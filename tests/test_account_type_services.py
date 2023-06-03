@@ -20,25 +20,39 @@ from .test_data.account_type_test_data import (
 @pytest.mark.parametrize(
     ["group", "expected", "fail_message"],
     [
-        ("all", ACCOUNT_TYPES, "'all' failed to return all types."),
         (
+            # Fetch All Account Types
+            "all",
+            ACCOUNT_TYPES,
+            "'all' failed to return all types.",
+        ),
+        (
+            # Fetch Liabilities
             "Liabilities",
             LIABILITIES,
             "'Liabilities' not returned with argument.",
         ),
         (
+            # Fetch Expenses
             "Expenses",
             EXPENSES,
             "'Expenses' not returned with argument.",
         ),
         (
+            # Fetch A Non-Existent Account Type Group
             "Not a real Account Type group",
             [],
             "Invalid group does not return an empty list.",
         ),
     ],
+    ids=[
+        "Fetch All Account Types",
+        "Fetch Liablities",
+        "Fetch Expenses",
+        "Fetch A Non-Existent Account Type Group",
+    ],
 )
-def test_get_account_types_happy(
+def test_get_account_types(
     group: str, expected: list[dict], fail_message: str, use_test_db
 ) -> None:
     """Test that get_account_types returns the right list of
@@ -47,29 +61,25 @@ def test_get_account_types_happy(
     assert get_account_types(group) == expected, fail_message
 
 
-def test_get_account_types_bad_group(use_test_db) -> None:
-    """Test that a specific error message is given if the group passed
-    in is not in the database.
-    """
-    assert get_account_types("not_a_type") == []
-
-
 @pytest.mark.parametrize(
     ["name", "group", "expected"],
     [
         (
+            # Create A New Asset Type
             "A New Checking Account",
             "Assets",
             dict(message="SUCCESS", account_name="A New Checking Account"),
         ),
         (
+            # Create A New Expense Type
             "Grocery Shopping",
             "Expenses",
             dict(message="SUCCESS", account_name="Grocery Shopping"),
         ),
     ],
+    ids=["Create A New Asset Type", "Create A New Expense Type"],
 )
-def test_create_account_type_happy(
+def test_create_account_type(
     name: str, group: str, expected: dict, use_test_db
 ) -> None:
     """Test various happy paths for create_account_type with various
