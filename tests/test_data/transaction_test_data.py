@@ -37,6 +37,15 @@ uncategorized_payment = dict(
     transaction_date=datetime(2023, 2, 25),
 )
 
+uncategoried_debit_expense = dict(
+    name="Uncategorized Debit Payment",
+    description="Uncategorized debit payment.",
+    amount=400.90,
+    debit_account_Id=account_name_to_id("Chase Savings"),
+    transaction_date=datetime(2023, 2, 25),
+)
+
+
 gas_payment = dict(
     name="Costco Gas",
     description="Costco Gas Wholesale",

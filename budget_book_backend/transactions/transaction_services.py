@@ -1,6 +1,5 @@
 from datetime import datetime
 import pandas as pd
-from typing import Mapping, Optional
 
 from budget_book_backend.models.db_setup import DbSetup
 from budget_book_backend.models.transaction import Transaction
@@ -72,12 +71,12 @@ def get_transactions_by_account(
     return dict_to_json(df.to_dict(), df.index)
 
 
-def add_new_transactions(transactions: list[Mapping]) -> dict:
+def add_new_transactions(transactions: list[dict]) -> dict:
     """Add new transaction(s) with the given information.
 
     Parameters
     ----------
-        transactions (list[Mapping]) : List of transaction data to add
+        transactions (list[dict]) : List of transaction data to add
             to the Transactions table.
 
     Returns
@@ -105,6 +104,11 @@ def add_new_transactions(transactions: list[Mapping]) -> dict:
                         date_entered=datetime.now(),
                     )
                 )
+
+            except KeyError as key_err:
+                problem_transactions.append(
+                    (i, f"Missing key {str(key_err)}.")
+                )
             except Exception as e:
                 problem_transactions.append((i, str(e)))
 
@@ -124,12 +128,12 @@ def add_new_transactions(transactions: list[Mapping]) -> dict:
     return dict(message=message)
 
 
-def categorize_transactions(transactions: list[Mapping]) -> dict:
+def categorize_transactions(transactions: list[dict]) -> dict:
     """Categorize the given transaction(s).
 
     Parameters
     ---------
-        transactions (list[Mapping]) : List of transaction data to adjust
+        transactions (list[dict]) : List of transaction data to adjust
             in the database.
 
     Returns
@@ -143,13 +147,13 @@ def categorize_transactions(transactions: list[Mapping]) -> dict:
         for i, trxn in enumerate(transactions):
             try:
                 transaction_id: int = trxn["transaction_id"]
-                transaction: Optional[Transaction] = session.get(
+                transaction: Transaction | None = session.get(
                     Transaction, transaction_id
                 )
 
                 if transaction is None:
                     raise Exception(
-                        f"Transaction with {transaction_id} cannot be found."
+                        f"Transaction with ID {transaction_id} cannot be found."
                     )
 
                 if trxn["debit_or_credit"] == "debit":
@@ -159,6 +163,12 @@ def categorize_transactions(transactions: list[Mapping]) -> dict:
                     transaction.credit_account_id = int(trxn["category_id"])
 
                 session.commit()
+
+            except KeyError as key_err:
+                problem_transactions.append(
+                    (i, f"Missing key {str(key_err)}.")
+                )
+
             except Exception as e:
                 problem_transactions.append((i, str(e)))
 
@@ -175,12 +185,12 @@ def categorize_transactions(transactions: list[Mapping]) -> dict:
     return dict(message=message)
 
 
-def update_transactions(transactions: list[Mapping]) -> dict:
+def update_transactions(transactions: list[dict]) -> dict:
     """Change existing transaction(s) to have new given values.
 
     Parameters
     ----------
-        transactions (list[Mapping]) : The list of transactions to
+        transactions (list[dict]) : The list of transactions to
             update in the database.
 
     Returns
@@ -193,35 +203,36 @@ def update_transactions(transactions: list[Mapping]) -> dict:
         for i, trxn in enumerate(transactions):
             try:
                 transaction_id: int = trxn["transaction_id"]
-                transaction: Optional[Transaction] = session.get(
+                transaction: Transaction | None = session.get(
                     Transaction, transaction_id
                 )
 
                 if transaction is None:
                     raise Exception(
-                        f"Transaction with {transaction_id} cannot be found."
+                        f"Transaction with ID of {transaction_id} cannot be found."
                     )
 
-                transaction.name = trxn.get("name") or transaction.name
-                transaction.description = (
-                    trxn.get("description") or transaction.description
+                transaction.name = trxn.get("name", transaction.name)
+                transaction.description = trxn.get(
+                    "description", transaction.description
                 )
-                transaction.amount = trxn.get("amount") or transaction.amount
-                transaction.debit_account_id = (
-                    trxn.get("debit_account_id")
-                    or transaction.debit_account_id
+                transaction.amount = trxn.get("amount", transaction.amount)
+                transaction.debit_account_id = trxn.get(
+                    "debit_account_id", transaction.debit_account_id
                 )
-                transaction.credit_account_id = (
-                    trxn.get("credit_account_id")
-                    or transaction.credit_account_id
+                transaction.credit_account_id = trxn.get(
+                    "credit_account_id", transaction.credit_account_id
                 )
 
-                transaction_date: Optional[str] = trxn.get("transaction_date")
+                transaction_date: str | None = trxn.get("transaction_date")
 
-                transaction.transaction_date = (
-                    datetime.fromisoformat(transaction_date)  # type: ignore
-                    or transaction.transaction_date
-                )
+                if transaction_date:
+                    transaction.transaction_date = datetime.fromisoformat(  # type: ignore
+                        transaction_date
+                    )
+                else:
+                    transaction.transaction_date = transaction.transaction_date
+
                 transaction.date_entered = datetime.now()  # type: ignore
 
                 session.commit()
@@ -260,13 +271,13 @@ def remove_transactions(transaction_ids: list[int]) -> dict:
     with DbSetup.Session() as session:
         for transaction_id in transaction_ids:
             try:
-                transaction: Optional[Transaction] = session.get(
+                transaction: Transaction | None = session.get(
                     Transaction, transaction_id
                 )
 
                 if transaction is None:
                     raise Exception(
-                        f"Transaction with {transaction_id} cannot be found."
+                        f"Transaction with ID of {transaction_id} cannot be found."
                     )
 
                 session.delete(transaction)
