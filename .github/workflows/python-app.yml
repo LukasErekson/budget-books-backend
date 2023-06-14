@@ -13,18 +13,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        python-version: [3.10, 3.11]
+
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
-          python-version: "3.10"
+          python-version: ${{ matrix.python-version }}
           cache: 'python'
       - name: Poetry Install Dependencies and Virtual env
         uses: knowsuchagency/poetry-install@v2
         with:
           # Have poetry create a virtualenv for the project on installation.
           create-virtualenv: true
-      - name: Install dependencies
       - name: Test with pytest
         run: poetry run python -m pytest
