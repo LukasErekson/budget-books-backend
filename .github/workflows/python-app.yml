@@ -13,16 +13,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        python-version: ["3.10", "3.11"]
-
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.10"
           cache: 'python'
       - name: Poetry Install Dependencies and Virtual env
         uses: knowsuchagency/poetry-install@v2
