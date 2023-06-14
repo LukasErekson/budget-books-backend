@@ -1,5 +1,7 @@
 # Budget Books Backend Code
 
+![Python App Workflow](https://github.com/LukasErekson/budget-books-backend/actions/workflows/python-app.yml/badge.svg)
+
 ## Routes
 
 ```python
