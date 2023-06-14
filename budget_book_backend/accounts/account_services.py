@@ -37,11 +37,11 @@ def get_accounts_by_type(
     """
     sql_statement: str = """SELECT * FROM accounts"""
 
-    if isinstance(types, str):
-        if types != "all":
-            sql_statement += f""" WHERE account_type_id IN
+    if len(types) == 1:
+        if types[0] != "all":
+            sql_statement += f""" WHERE account_type_id = 
             (SELECT id FROM account_types
-                WHERE name = '{types}')"""
+                WHERE name = '{types[0]}')"""
     elif types:
         sql_statement += f""" WHERE account_type_id IN
         (SELECT id FROM account_types
@@ -140,9 +140,9 @@ def add_new_account_to_db(
 
             session.add(new_acct)
 
-            account_id = new_acct.id
-
             session.commit()
+
+            account_id = new_acct.id
 
         except Exception as e:
             return dict(

@@ -124,9 +124,7 @@ def get_account_balances():
     if isinstance(account_ids, int):
         account_ids = [account_ids]
     if isinstance(account_ids, str):
-        account_ids = [int(account_ids)]
-    elif isinstance(account_ids, str):
-        account_ids = map(int, account_ids.split(","))
+        account_ids = list(map(int, account_ids.split(",")))
 
     response_dict: dict = account_balances(account_ids)
 
