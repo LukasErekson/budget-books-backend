@@ -181,3 +181,41 @@ def account_balances(account_ids: list[int]) -> dict:
             id_to_balance[account.id] = account.balance()
 
     return id_to_balance
+
+
+def update_account_info(edit_account: dict) -> dict:
+    """Update a given account's info in the databse.
+
+    Paramters
+    ---------
+        edit_account (dict) : A dictionary with all the
+            required Account information, including ID,
+            name, account type, etc.
+
+    Returns
+    -------
+        (dict) : Response dictionary indicating whether or not
+            the updatd was successful in the database.
+    """
+    new_name: str = edit_account["name"]
+    new_account_type_id: int = edit_account["account_type_id"]
+    new_debit_inc: bool = edit_account["debit_inc"]
+
+    if not new_name:
+        return dict(message="ERROR", error="Account name cannot be blank.")
+
+    with DbSetup.Session() as session:
+        account: Account | None = session.get(Account, edit_account["id"])
+
+        if account is None:
+            raise Exception(
+                f'Account with ID {edit_account["id"]} cannot be found.'
+            )
+
+        account.name = new_name
+        account.account_type_id = new_account_type_id
+        account.debit_inc = new_debit_inc
+
+        session.commit()
+
+    return dict(message="SUCCESS")

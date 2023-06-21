@@ -1,7 +1,6 @@
 from flask import Blueprint, request
 
 import json
-from typing import Mapping
 from budget_book_backend.utils import endpoint_error_wrapper
 
 from .transaction_services import (
@@ -27,17 +26,32 @@ def get_transactions():
     Example of arguments:
         ?account_ids=1,2
     """
-    account_ids_str: list[str] = request.args["account_ids"].split(",")
-    account_ids: list[int] = list(map(int, account_ids_str))
-    categorize_type: str = request.args.get("categorize_type", "all")
+    url_account_ids: str | None = request.args.get("account_ids")
 
-    if len(account_ids) == 0:
+    if url_account_ids is None:
+        return (
+            json.dumps(
+                dict(
+                    message="ERROR", error="URL is missing account_ids values."
+                )
+            ),
+            400,
+        )
+
+    account_id_strings: list[str] = list(
+        filter(lambda id: id, url_account_ids.split(","))
+    )
+
+    if len(account_id_strings) == 0:
         return (
             json.dumps(
                 dict(message="ERROR: No account_ids found in the request."),
             ),
             500,
         )
+
+    account_ids: list[int] = list(map(int, account_id_strings))
+    categorize_type: str = request.args.get("categorize_type", "all")
 
     transactions: list[dict] = get_transactions_by_account(
         account_ids, categorize_type
@@ -69,9 +83,9 @@ def post_new_transactions():
         ]
     }
     """
-    request_json: Mapping = request.get_json()
+    request_json: dict = request.get_json()
 
-    transactions: list[Mapping] = request_json.get("transactions", [])
+    transactions: list[dict] = request_json.get("transactions", [])
 
     status_dict: dict = add_new_transactions(transactions)
 
@@ -98,9 +112,9 @@ def put_category():
         ]
     }
     """
-    request_json: Mapping = request.get_json()
+    request_json: dict = request.get_json()
 
-    transactions: list[Mapping] = request_json.get("transactions", [])
+    transactions: list[dict] = request_json.get("transactions", [])
 
     status_dict: dict = categorize_transactions(transactions)
 
@@ -129,9 +143,9 @@ def patch():
         ]
     }
     """
-    request_json: Mapping = request.get_json()
+    request_json: dict = request.get_json()
 
-    transactions: list[Mapping] = request_json.get("transactions", [])
+    transactions: list[dict] = request_json.get("transactions", [])
 
     status_dict: dict = update_transactions(transactions)
 
@@ -152,7 +166,7 @@ def delete():
         "transaction_ids": [1, 2]
     }
     """
-    request_json: Mapping = request.get_json()
+    request_json: dict = request.get_json()
 
     transaction_ids: list[int] = request_json.get("transaction_ids", [])
 

@@ -6,6 +6,7 @@ from budget_book_backend.accounts.account_services import (
     account_balances,
     add_new_account_to_db,
     get_accounts_by_type,
+    update_account_info,
 )
 from budget_book_backend.models.account import Account
 from budget_book_backend.models.db_setup import DbSetup
@@ -234,3 +235,44 @@ def test_account_balances(
 
     # Extra accounts aren't being returned
     assert len(expected) == len(actual_return)
+
+
+@pytest.mark.parametrize(
+    ["edit_account", "expected"],
+    [
+        (
+            # Valid Account Update
+            dict(
+                id=2,
+                name="Edited Account Name",
+                account_type_id=1,
+                debit_inc=True,
+            ),
+            dict(message="SUCCESS"),
+        ),
+        (
+            # Empty Account Name
+            dict(id=3, name="", account_type_id=1, debit_inc=False),
+            dict(message="ERROR", error="Account name cannot be blank."),
+        ),
+    ],
+    ids=["Valid Account Update", "Empty Account Name"],
+)
+def test_update_account_info(
+    edit_account: dict, expected: dict, use_test_db
+) -> None:
+    """Test udpating several transactions in the Database."""
+    response: dict = update_account_info(edit_account)
+    assert response == expected
+
+    # Skip Database verfication if there was an error
+    if "error" in response:
+        return
+
+    with DbSetup.Session() as session:
+        updated_account: Account | None = session.get(
+            Account, edit_account["id"]
+        )
+
+        for key in edit_account.keys():
+            assert updated_account.__getattribute__(key) == edit_account[key]

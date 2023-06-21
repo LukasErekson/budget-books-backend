@@ -7,6 +7,7 @@ from budget_book_backend.accounts.account_services import (
     account_balances,
     get_accounts_by_type,
     add_new_account_to_db,
+    update_account_info,
 )
 from budget_book_backend.utils.utils import (
     endpoint_error_wrapper,
@@ -129,3 +130,25 @@ def get_account_balances():
     response_dict: dict = account_balances(account_ids)
 
     return json.dumps(dict(message="SUCCESS", balances=response_dict)), 200
+
+
+@endpoint_error_wrapper
+@accounts_routes.route(f"{BASE_ACCOUNTS_URL}", methods=["PUT"])
+def put_account_update():
+    """Update a single account's info."""
+    request_json: dict = request.get_json()
+
+    edit_account = request_json.get("editedAccount")
+
+    if edit_account is None:
+        return (
+            json.dumps(
+                dict(
+                    message="ERROR",
+                    error="No field for 'editedAccount' found within the request body.",
+                ),
+            ),
+            400,
+        )
+
+    return json.dumps(update_account_info(edit_account=edit_account)), 200
