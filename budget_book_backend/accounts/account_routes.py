@@ -8,6 +8,7 @@ from budget_book_backend.accounts.account_services import (
     get_accounts_by_type,
     add_new_account_to_db,
     update_account_info,
+    delete_account,
 )
 from budget_book_backend.utils.utils import (
     endpoint_error_wrapper,
@@ -152,3 +153,23 @@ def put_account_update():
         )
 
     return json.dumps(update_account_info(edit_account=edit_account)), 200
+
+
+@endpoint_error_wrapper
+@accounts_routes.route(f"{BASE_ACCOUNTS_URL}", methods=["DELETE"])
+def delete_account_update():
+    """Remove a single account from the Database."""
+    account_id: str | None = request.args.get("id")
+
+    if account_id is None:
+        return (
+            json.dumps(
+                dict(
+                    message="ERROR",
+                    error="No field for 'id' found within the request url.",
+                ),
+            ),
+            400,
+        )
+
+    return json.dumps(delete_account(int(account_id)))

@@ -7,6 +7,7 @@ from budget_book_backend.accounts.account_services import (
     add_new_account_to_db,
     get_accounts_by_type,
     update_account_info,
+    delete_account,
 )
 from budget_book_backend.models.account import Account
 from budget_book_backend.models.db_setup import DbSetup
@@ -276,3 +277,28 @@ def test_update_account_info(
 
         for key in edit_account.keys():
             assert updated_account.__getattribute__(key) == edit_account[key]
+
+
+@pytest.mark.parametrize(
+    ["delete_account_id", "expected"],
+    [
+        # Successful Deletion of Existing Account
+        (1, dict(message="SUCCESS")),
+    ],
+    ids=[
+        "Successful Deletion of Existing Account",
+    ],
+)
+def test_delete_account(delete_account_id: int, expected: dict, use_test_db):
+    """Test deleting a single transaction at a time."""
+    result: dict = delete_account(delete_account_id=delete_account_id)
+
+    assert result == expected
+
+    if result["message"] == "SUCCESS":
+        with DbSetup.Session() as session:
+            deleted_account: Account | None = session.get(
+                Account, delete_account_id
+            )
+
+            assert deleted_account is None

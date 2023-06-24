@@ -219,3 +219,29 @@ def update_account_info(edit_account: dict) -> dict:
         session.commit()
 
     return dict(message="SUCCESS")
+
+
+def delete_account(delete_account_id: int) -> dict:
+    """Remove a given account from the database.
+
+    Parameters
+    ----------
+        delete_account_id (int) : The ID of the account to delete.
+
+    Returns
+    -------
+        (dict) : Response dictionary indicating whether or not is was successful.
+    """
+    with DbSetup.Session() as session:
+        account: Account | None = session.get(Account, delete_account_id)
+
+        if account is None:
+            raise Exception(
+                f"Account with ID {delete_account_id} cannot be found."
+            )
+
+        session.delete(account)
+
+        session.commit()
+
+    return dict(message="SUCCESS")
