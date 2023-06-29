@@ -5,7 +5,13 @@ from budget_book_backend.models.account_type import AccountType
 from budget_book_backend.models.db_setup import DbSetup
 from budget_book_backend.utils import dict_to_json
 
+from budget_book_backend.utils.utils import (
+    endpoint_error_wrapper,
+    validate_and_get_json,
+)
 
+
+@endpoint_error_wrapper
 def get_account_types(group: str = "all") -> list[dict]:
     """Return all the account types, with their names and groups,
     with the requested group type. If no group type is given, it
@@ -25,7 +31,7 @@ def get_account_types(group: str = "all") -> list[dict]:
     sql_statement: str = """SELECT * FROM account_types """
 
     if group != "all":
-        sql_statement += f" WHERE \"group\" = '{group}'"
+        sql_statement += f" WHERE \"group_name\" = '{group}'"
 
     df: pd.DataFrame = pd.read_sql_query(
         text(sql_statement), DbSetup.engine.connect()
@@ -34,6 +40,7 @@ def get_account_types(group: str = "all") -> list[dict]:
     return dict_to_json(df.to_dict(), df.index)
 
 
+@endpoint_error_wrapper
 def create_account_type(name: str, group: str = "Misc.") -> dict:
     """Add a new account type to the database.
 
@@ -58,7 +65,9 @@ def create_account_type(name: str, group: str = "Misc.") -> dict:
 
     with DbSetup.Session() as session:
         try:
-            new_acct_type: AccountType = AccountType(name=name, group=group)
+            new_acct_type: AccountType = AccountType(
+                name=name, group_name=group
+            )
 
             session.add(new_acct_type)
 
@@ -72,3 +81,24 @@ def create_account_type(name: str, group: str = "Misc.") -> dict:
             )
 
     return dict(message="SUCCESS", account_name=name)
+
+
+@endpoint_error_wrapper
+def get_account_type_groups() -> dict[str, str | list]:
+    """Fetch all the Account Type groups.
+
+    Returns
+    -------
+        (dict) : A dictionary with a message indicating whether or not
+            an exception was thrown and the account type name.
+    """
+    account_groups: list = []
+
+    with DbSetup.Session() as session:
+        try:
+            account_groups = []
+
+        except Exception as e:
+            return dict(message="ERROR", error=str(e))
+
+    return dict(message="SUCCESS", account_groups=[])

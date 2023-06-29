@@ -39,7 +39,7 @@ def get_accounts_by_type(
 
     if len(types) == 1:
         if types[0] != "all":
-            sql_statement += f""" WHERE account_type_id = 
+            sql_statement += f""" WHERE account_type_id =
             (SELECT id FROM account_types
                 WHERE name = '{types[0]}')"""
     elif types:
@@ -112,7 +112,7 @@ def add_new_account_to_db(
             if account_type_id == -1:
                 new_acct_type: AccountType = AccountType(
                     name=account_type_label,
-                    group="Misc.",
+                    group_name="Misc.",
                 )
                 session.add(new_acct_type)
                 session.commit()

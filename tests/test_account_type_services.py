@@ -90,7 +90,7 @@ def test_create_account_type(
 
     with DbSetup.Session() as session:
         statement: Select[tuple[AccountType]] = select(AccountType).filter_by(
-            name=name, group=group
+            name=name, group_name=group
         )
         new_account_type: Optional[AccountType] = session.scalar(statement)
 
@@ -115,7 +115,7 @@ def test_create_account_type_no_group(use_test_db) -> None:
 
     with DbSetup.Session() as session:
         statement: Select[tuple[AccountType]] = select(AccountType).filter_by(
-            name="Subscription", group="Misc."
+            name="Subscription", group_name="Misc."
         )
         new_account_type: Optional[AccountType] = session.scalar(statement)
 
