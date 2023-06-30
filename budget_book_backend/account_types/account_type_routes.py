@@ -1,6 +1,5 @@
 import json
 
-from typing import Optional
 from flask import Blueprint, request
 
 from budget_book_backend.account_types.account_type_services import (
@@ -67,8 +66,8 @@ def add_new_account_type():
     }
     """
     request_json = validate_and_get_json()
-    name: Optional[str] = request_json.get("name")
-    group: str = request_json.get("group", "Misc.")
+    name: str | None = request_json.get("name")
+    group: str = request_json.get("group_name", "Misc.")
 
     if name is None:
         return (
