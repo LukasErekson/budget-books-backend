@@ -57,7 +57,7 @@ from tests.test_data.account_test_data import account_type_name_to_id, ACCOUNTS
     ids=[
         "Get 'Checking Account', 'Savings Account', and 'Credit Card' Accounts",
         "Get 1 Expense Account",
-        "Get 2 Expense Accoutns",
+        "Get 2 Expense Accounts",
     ],
 )
 def test_get_accounts_by_type_different_types(

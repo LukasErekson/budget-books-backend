@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 
 import pandas as pd
-from sqlalchemy import text
+from sqlalchemy import select, text
 
 from budget_book_backend.models.account import Account
 from budget_book_backend.models.account_type import AccountType
@@ -35,50 +35,72 @@ def get_accounts_by_type(
             simple to convert to a dict that is JSON serializable.
 
     """
-    sql_statement: str = """SELECT * FROM accounts"""
-
-    if len(types) == 1:
-        if types[0] != "all":
-            sql_statement += f""" WHERE account_type_id =
-            (SELECT id FROM account_types
-                WHERE name = '{types[0]}')"""
-    elif types:
-        sql_statement += f""" WHERE account_type_id IN
-        (SELECT id FROM account_types
-            WHERE name in {types})"""
-    df: pd.DataFrame = pd.read_sql_query(
-        text(sql_statement), DbSetup.engine.connect()
-    )
-
-    df["balance"] = 0.0
-    df["start_date"] = datetime.strftime(balance_start_date, "%Y-%m-%d")
-    df["end_date"] = datetime.strftime(balance_end_date, "%Y-%m-%d")
-    df["last_updated"] = datetime.strftime(datetime.today(), "%Y-%m-%d")
-    df["uncategorized_transactions"] = 0
-    df["account_type"] = ""
-
     with DbSetup.Session() as session:
-        ids: list[int] = df["id"].to_list()
+        if types[0] != "all":
+            account_types: tuple[AccountType, ...] = tuple(
+                session.scalars(
+                    select(AccountType).where(AccountType.name.in_(types))
+                ).all()
+            )
+        else:
+            account_types = tuple(session.scalars(select(AccountType)).all())
 
-        account_objs = session.query(Account).filter(Account.id.in_(ids)).all()
+        ids: tuple | str = tuple(
+            map(lambda account_type: account_type.id, account_types)
+        )
+
+        account_objs: list[Account] = list(
+            session.scalars(
+                select(Account).where(Account.account_type_id.in_(ids))
+            )
+        )
+
+        # Special case where a singular value in a tuple
+        # isn't formatted right for SQL queries.
+        if len(ids) == 1:
+            ids = f"({ids[0]})"
+
+        accounts_df: pd.DataFrame = pd.read_sql_query(
+            text(f"SELECT * FROM accounts WHERE account_type_id IN {ids}"),
+            DbSetup.engine.connect(),
+            index_col="id",
+        )
+
+        accounts_df["balance"] = 0.0
+        accounts_df["start_date"] = datetime.strftime(
+            balance_start_date, "%Y-%m-%d"
+        )
+        accounts_df["end_date"] = datetime.strftime(
+            balance_end_date, "%Y-%m-%d"
+        )
+        accounts_df["last_updated"] = datetime.strftime(
+            datetime.today(), "%Y-%m-%d"
+        )
+        accounts_df["uncategorized_transactions"] = 0
+        accounts_df["account_type"] = ""
+        accounts_df["account_group"] = ""
+        accounts_df["id"] = accounts_df.index
 
         for account in account_objs:
-            df.loc[df["id"] == account.id, "balance"] = account.balance(
+            accounts_df.loc[account.id, "balance"] = account.balance(
                 balance_start_date, balance_end_date
             )
-            df.loc[df["id"] == account.id, "uncategorized_transactions"] = len(
+            accounts_df.loc[account.id, "uncategorized_transactions"] = len(
                 account.uncategorized_transactions(
                     balance_start_date, balance_end_date
                 )
             )
-            df.loc[df["id"] == account.id, "last_updated"] = datetime.strftime(
+            accounts_df.loc[account.id, "last_updated"] = datetime.strftime(
                 account.last_updated(), "%Y-%m-%d"
             )
-            df.loc[
-                df["id"] == account.id, "account_type"
+            accounts_df.loc[
+                account.id, "account_type"
             ] = account.account_type.name
+            accounts_df.loc[
+                account.id, "account_group"
+            ] = account.account_type.group_name
 
-    return dict_to_json(df.to_dict(), df.index)
+    return dict_to_json(accounts_df.to_dict(), accounts_df.index)
 
 
 def add_new_account_to_db(
@@ -157,7 +179,7 @@ def add_new_account_to_db(
     )
 
 
-def account_balances(account_ids: list[int]) -> dict:
+def account_balances(account_ids: list[int]) -> dict[int, float]:
     """Calculate and return the account balances of the
     given list of account ids.
 
@@ -175,9 +197,11 @@ def account_balances(account_ids: list[int]) -> dict:
 
     with DbSetup.Session() as session:
         for id in account_ids:
-            account: Account = (
-                session.query(Account).filter(Account.id == id).scalar()
-            )
+            account: Account | None = session.get(Account, id)
+
+            if account is None:
+                continue
+
             id_to_balance[account.id] = account.balance()
 
     return id_to_balance
