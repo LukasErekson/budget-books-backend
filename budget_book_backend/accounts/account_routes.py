@@ -9,6 +9,7 @@ from budget_book_backend.accounts.account_services import (
     add_new_account_to_db,
     update_account_info,
     delete_account,
+    account_net_changes_by_group,
 )
 from budget_book_backend.utils.utils import (
     endpoint_error_wrapper,
@@ -137,7 +138,7 @@ def get_account_balances():
 @accounts_routes.route(f"{BASE_ACCOUNTS_URL}", methods=["PUT"])
 def put_account_update():
     """Update a single account's info."""
-    request_json: dict = request.get_json()
+    request_json: dict = validate_and_get_json()
 
     edit_account = request_json.get("editedAccount")
 
@@ -173,3 +174,29 @@ def delete_account_update():
         )
 
     return json.dumps(delete_account(int(account_id)))
+
+
+@endpoint_error_wrapper
+@accounts_routes.route(
+    f"{BASE_ACCOUNTS_URL}/balances-by-group", methods=["POST"]
+)
+def account_group_net_report():
+    """Collect the net change in balances for the
+    given account groups between given dates.
+
+    JSON Parameters
+    ---------------
+        dates (list[str]) : The dates to fetch the account balances from.
+        account_groups (list[str]) : The different account groups from
+            which to grab the accounts and their balances.
+    """
+    request_json: dict = validate_and_get_json()
+
+    report_response: dict = account_net_changes_by_group(
+        account_groups=request_json.get("accountGroups", []),
+        date_ranges=request_json.get(
+            "dateRanges", [datetime.today().strftime("%Y-%m-%d")]
+        ),
+    )
+
+    return json.dumps(report_response), 200
