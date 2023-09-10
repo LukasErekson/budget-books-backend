@@ -298,49 +298,59 @@ def account_net_changes_by_group(
                     }
                 }
     """
-    account_balances: dict = {"dates": date_ranges, "message": "SUCCESS"}
+    # If only given one date, assume the first date is the earliest possible.
+    if len(date_ranges) == 1:
+        date_ranges.insert(0, "0001-01-1")
+
+    account_balances: dict = {
+        "dates": date_ranges,
+        "message": "SUCCESS",
+    }
+
+    for group in account_groups:
+        account_balances[group] = {}
 
     with DbSetup.Session() as session:
-        # TODO: So many nested loops... is there a better way to do this? Leverage Pandas?
-        for acc_group in account_groups:
-            account_balances[acc_group] = dict()
-            account_types: Optional[list[AccountType]] = (
-                session.query(AccountType)
-                .filter(AccountType.group_name == acc_group)
-                .all()
+        account_types: Optional[list[AccountType]] = (
+            session.query(AccountType)
+            .filter(AccountType.group_name.in_(account_groups))
+            .all()
+        )
+
+        if account_types is None:
+            return dict(
+                message="ERROR",
+                error=f"There was a problem getting the account types associated with {', '.join(account_groups)}",
             )
 
-            if account_types is None:
-                return dict(
-                    message="ERROR",
-                    error=f"There was a problem getting the account types associated with {acc_group}",
+        account_type_ids: list[int] = [
+            acct_type.id for acct_type in account_types
+        ]
+
+        accounts: Optional[list[Account]] = (
+            session.query(Account)
+            .filter(Account.account_type_id.in_(account_type_ids))
+            .all()
+        )
+
+        if accounts is None:
+            return dict(
+                message="ERROR",
+                error=f"There was a problem getting the accounts associated with {', '.join(account_types)}",
+            )
+
+        for account in accounts:
+            account_group: str = account.account_type.group_name
+            account_type: str = account.account_type.name
+
+            account_balances[account_group].setdefault(account_type, dict())
+
+            account_balances[account_group][account_type][account.name] = [
+                account.balance(
+                    datetime.strptime(start, "%Y-%m-%d"),
+                    datetime.strptime(end, "%Y-%m-%d"),
                 )
-
-            for account_type in account_types:
-                account_balances[acc_group][account_type.name] = dict()
-                accounts: Optional[list[Account]] = (
-                    session.query(Account)
-                    .filter(Account.account_type_id == account_type.id)
-                    .all()
-                )
-
-                if accounts is None:
-                    return dict(
-                        message="ERROR",
-                        error=f"There was a rpoblem getting the accounts associated with {account_type.name}",
-                    )
-
-                for account in accounts:
-                    account_balances[acc_group][account_type.name][
-                        account.name
-                    ] = [
-                        account.balance(
-                            datetime.strptime(start, "%Y-%m-%d"),
-                            datetime.strptime(end, "%Y-%m-%d"),
-                        )
-                        for start, end in zip(
-                            date_ranges[:-1], date_ranges[1:]
-                        )
-                    ]
+                for start, end in zip(date_ranges[:-1], date_ranges[1:])
+            ]
 
     return account_balances

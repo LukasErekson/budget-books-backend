@@ -8,6 +8,7 @@ from budget_book_backend.accounts.account_services import (
     get_accounts_by_type,
     update_account_info,
     delete_account,
+    account_net_changes_by_group,
 )
 from budget_book_backend.models.account import Account
 from budget_book_backend.models.db_setup import DbSetup
@@ -302,3 +303,43 @@ def test_delete_account(delete_account_id: int, expected: dict, use_test_db):
             )
 
             assert deleted_account is None
+
+
+@pytest.mark.parametrize(
+    ["account_groups", "date_ranges", "expected"],
+    [
+        (
+            ["Assets"],
+            ["2023-01-01"],
+            {
+                "message": "SUCCESS",
+                "dates": ["0001-01-1", "2023-01-01"],
+                "Assets": {"Savings Account": {"Chase Savings": [0.0]}},
+            },
+        ),
+        (
+            ["Expenses", "Income"],
+            ["2023-01-01", "2023-01-31"],
+            {
+                "message": "SUCCESS",
+                "dates": ["2023-01-01", "2023-01-31"],
+                "Expenses": {
+                    "Gas": {"Gas for Car": [0.0]},
+                    "Rent": {"Apartment Rent": [0.0]},
+                },
+                "Income": {},
+            },
+        ),
+    ],
+    ids=["Assets before January 1, 2023",
+         "Expense Report Jan 2023",],
+)
+def test_account_net_changes_by_group(
+    account_groups: list[str],
+    date_ranges: list[str],
+    expected: dict,
+    use_test_db,
+):
+    result: dict = account_net_changes_by_group(account_groups, date_ranges)
+
+    assert partial_dict_match(expected, result)
