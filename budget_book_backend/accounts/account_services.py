@@ -284,6 +284,7 @@ def account_net_changes_by_group(
             grab the balances of.
         date_ranges (list[str]) : The dates between which to return the
             balances of the different accounts within the account groups.
+            This list is assumed to be of even length of at least 2.
 
     Returns
     -------
@@ -347,10 +348,10 @@ def account_net_changes_by_group(
 
             account_balances[account_group][account_type][account.name] = [
                 account.balance(
-                    datetime.strptime(start, "%Y-%m-%d"),
-                    datetime.strptime(end, "%Y-%m-%d"),
+                    datetime.strptime(date_ranges[i], "%Y-%m-%d"),
+                    datetime.strptime(date_ranges[i + 1], "%Y-%m-%d"),
                 )
-                for start, end in zip(date_ranges[:-1], date_ranges[1:])
+                for i in range(0, len(date_ranges), 2)
             ]
 
     return account_balances
