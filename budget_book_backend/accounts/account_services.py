@@ -351,6 +351,7 @@ def account_net_changes_by_group(
                     datetime.strptime(date_ranges[i], "%Y-%m-%d"),
                     datetime.strptime(date_ranges[i + 1], "%Y-%m-%d"),
                 )
+                * ((-1) ** (account.debit_inc))
                 for i in range(0, len(date_ranges), 2)
             ]
 
