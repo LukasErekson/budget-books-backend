@@ -213,16 +213,24 @@ def update_transactions(transactions: list[dict]) -> dict:
                     )
 
                 transaction.name = trxn.get("name", transaction.name)
+
                 transaction.description = trxn.get(
                     "description", transaction.description
                 )
+
                 transaction.amount = trxn.get("amount", transaction.amount)
+
                 transaction.debit_account_id = trxn.get(
                     "debit_account_id", transaction.debit_account_id
                 )
+                if transaction.debit_account_id == "undefined":
+                    transaction.debit_account_id = None
+
                 transaction.credit_account_id = trxn.get(
                     "credit_account_id", transaction.credit_account_id
                 )
+                if transaction.credit_account_id == "undefined":
+                    transaction.credit_account_id = None
 
                 transaction_date: str | None = trxn.get("transaction_date")
 

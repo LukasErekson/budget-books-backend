@@ -156,6 +156,36 @@ def patch():
 
 
 @endpoint_error_wrapper
+@transaction_routes.route(f"{BASE_TRANSACTION_URL}/<id>", methods=["PUT"])
+def edit(id: int) -> tuple[str, int]:
+    """Change existing transaction(s) to have new values.
+
+    Example request.json:
+    {
+        "transactions": [
+            {
+            "id": "2",
+            "name": "Test Post",
+            "description": "A Postman test to write to the database.",
+            "amount": "50.24",
+            "credit_account_id": "1",
+            "transaction_date": "2022-10-02"
+            }
+        ]
+    }
+    """
+    request_json: dict = request.get_json()
+
+    edited_transaction: dict = request_json.get("transaction", {})
+
+    edited_transaction["transaction_id"] = id
+
+    status_dict: dict = update_transactions([edited_transaction])
+
+    return json.dumps(status_dict), 200
+
+
+@endpoint_error_wrapper
 @transaction_routes.route(f"{BASE_TRANSACTION_URL}", methods=["DELETE"])
 def delete():
     """Delete transaction(s) with given ID(s).

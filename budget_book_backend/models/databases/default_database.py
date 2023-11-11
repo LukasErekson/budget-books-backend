@@ -85,6 +85,11 @@ DEFAULT_ACCOUNTS: list[Acc] = [
         debit_inc=False,
         account_type_id=account_type_name_to_id("Opening Balance Equity"),
     ),
+    Acc(
+        name="Utilities",
+        debit_inc=True,
+        account_type_id=account_type_name_to_id("Recurring Expense"),
+    ),
 ]
 
 
