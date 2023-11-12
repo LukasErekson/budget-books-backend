@@ -134,12 +134,12 @@ def add_new_account_to_db(
                     session.add(new_acct_type)
                     session.commit()
 
-                # Attempt to query again
-                new_account_type = (
-                    session.query(AccountType)
-                    .filter(AccountType.name == account_type_label)
-                    .first()
-                )
+                    # Attempt to query again
+                    new_account_type = (
+                        session.query(AccountType)
+                        .filter(AccountType.name == account_type_label)
+                        .first()
+                    )
 
                 if new_account_type is None:
                     raise Exception(
