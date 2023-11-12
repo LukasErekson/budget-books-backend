@@ -50,9 +50,7 @@ def get_accounts_by_type(
         )
 
         account_objs: list[Account] = list(
-            session.scalars(
-                select(Account).where(Account.account_type_id.in_(ids))
-            )
+            session.scalars(select(Account).where(Account.account_type_id.in_(ids)))
         )
 
         # Special case where a singular value in a tuple
@@ -67,15 +65,9 @@ def get_accounts_by_type(
         )
 
         accounts_df["balance"] = 0.0
-        accounts_df["start_date"] = datetime.strftime(
-            balance_start_date, "%Y-%m-%d"
-        )
-        accounts_df["end_date"] = datetime.strftime(
-            balance_end_date, "%Y-%m-%d"
-        )
-        accounts_df["last_updated"] = datetime.strftime(
-            datetime.today(), "%Y-%m-%d"
-        )
+        accounts_df["start_date"] = datetime.strftime(balance_start_date, "%Y-%m-%d")
+        accounts_df["end_date"] = datetime.strftime(balance_end_date, "%Y-%m-%d")
+        accounts_df["last_updated"] = datetime.strftime(datetime.today(), "%Y-%m-%d")
         accounts_df["uncategorized_transactions"] = 0
         accounts_df["account_type"] = ""
         accounts_df["account_group"] = ""
@@ -86,16 +78,12 @@ def get_accounts_by_type(
                 balance_start_date, balance_end_date
             )
             accounts_df.loc[account.id, "uncategorized_transactions"] = len(
-                account.uncategorized_transactions(
-                    balance_start_date, balance_end_date
-                )
+                account.uncategorized_transactions(balance_start_date, balance_end_date)
             )
             accounts_df.loc[account.id, "last_updated"] = datetime.strftime(
                 account.last_updated(), "%Y-%m-%d"
             )
-            accounts_df.loc[
-                account.id, "account_type"
-            ] = account.account_type.name
+            accounts_df.loc[account.id, "account_type"] = account.account_type.name
             accounts_df.loc[
                 account.id, "account_group"
             ] = account.account_type.group_name
@@ -132,14 +120,22 @@ def add_new_account_to_db(
         try:
             # Create a new account Type if the id is -1.
             if account_type_id == -1:
-                new_acct_type: AccountType = AccountType(
-                    name=account_type_label,
-                    group_name="Misc.",
-                )
-                session.add(new_acct_type)
-                session.commit()
-
                 new_account_type: Optional[AccountType] = (
+                    session.query(AccountType)
+                    .filter(AccountType.name == account_type_label)
+                    .first()
+                )
+
+                if new_account_type is None:
+                    new_acct_type: AccountType = AccountType(
+                        name=account_type_label,
+                        group_name="Misc.",
+                    )
+                    session.add(new_acct_type)
+                    session.commit()
+
+                # Attempt to query again
+                new_account_type = (
                     session.query(AccountType)
                     .filter(AccountType.name == account_type_label)
                     .first()
@@ -232,9 +228,7 @@ def update_account_info(edit_account: dict) -> dict:
         account: Account | None = session.get(Account, edit_account["id"])
 
         if account is None:
-            raise Exception(
-                f'Account with ID {edit_account["id"]} cannot be found.'
-            )
+            raise Exception(f'Account with ID {edit_account["id"]} cannot be found.')
 
         account.name = new_name
         account.account_type_id = new_account_type_id
@@ -260,9 +254,7 @@ def delete_account(delete_account_id: int) -> dict:
         account: Account | None = session.get(Account, delete_account_id)
 
         if account is None:
-            raise Exception(
-                f"Account with ID {delete_account_id} cannot be found."
-            )
+            raise Exception(f"Account with ID {delete_account_id} cannot be found.")
 
         session.delete(account)
 
@@ -324,9 +316,7 @@ def account_net_changes_by_group(
                 error=f"There was a problem getting the account types associated with {', '.join(account_groups)}",
             )
 
-        account_type_ids: list[int] = [
-            acct_type.id for acct_type in account_types
-        ]
+        account_type_ids: list[int] = [acct_type.id for acct_type in account_types]
 
         accounts: Optional[list[Account]] = (
             session.query(Account)
