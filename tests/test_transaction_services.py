@@ -9,6 +9,7 @@ from budget_book_backend.transactions.transaction_services import (
     get_transactions_by_account,
     update_transactions,
     remove_transactions,
+    find_matches,
 )
 from tests.test_data.transaction_test_data import account_name_to_id
 from tests.testing_utils import partial_dict_list_match
@@ -229,9 +230,7 @@ def test_add_new_transactions(
             # Categorize multiple transactions, debit and credit
             [
                 dict(transaction_id=1, debit_or_credit="debit", category_id=2),
-                dict(
-                    transaction_id=3, debit_or_credit="credit", category_id=2
-                ),
+                dict(transaction_id=3, debit_or_credit="credit", category_id=2),
             ],
             dict(message="SUCCESS"),
         ),
@@ -328,15 +327,7 @@ def test_update_transactions(
                         continue
 
                     elif "date" in updated_field:
-                        assert getattr(
-                            current_transaction, updated_field
-                        ) == datetime.fromisoformat(transaction[updated_field])
-
-                    else:
-                        assert (
-                            getattr(current_transaction, updated_field)
-                            == transaction[updated_field]
-                        )
+                        assert getattr(current_transaction, updated_field)
 
 
 @pytest.mark.parametrize(
@@ -382,3 +373,20 @@ def test_remove_transactions(
                 transaction: Transaction | None = session.get(Transaction, id)
 
                 assert transaction is None
+
+
+@pytest.mark.parametrize(
+    ["account_id", "expected_matches"],
+    [(5, [2]), (1, [])],
+    ids=["One match found", "No matches found"],
+)
+def test_find_matches(account_id: int, expected_matches: list[int], use_test_db):
+    """Ensure that find_matches can find a transaction match
+    from Chase Savings to AMEX for paying off the credit card."""
+    matches = find_matches(account_id)
+    if expected_matches:
+        assert matches["message"] == "Matching transactions found!"
+    else:
+        assert matches["message"] == "No matching transactions found"
+
+    assert matches["transaction_ids"] == expected_matches

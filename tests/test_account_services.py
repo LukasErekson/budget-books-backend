@@ -26,13 +26,13 @@ from tests.test_data.account_test_data import account_type_name_to_id, ACCOUNTS
             [
                 {
                     "name": "AMEX",
-                    "balance": 67.50,
+                    "balance": -11.40,
                     "uncategorized_transactions": 1,
                     "account_type": "Credit Card",
                 },
                 {
                     "name": "Chase Savings",
-                    "balance": -1250.0,
+                    "balance": -1328.90,
                     "account_type": "Savings Account",
                 },
             ],
@@ -97,8 +97,8 @@ def test_get_accounts_by_type_different_types(
             datetime(2023, 1, 1),
             datetime(2023, 2, 27),
             [
-                {"name": "AMEX", "balance": 67.50},
-                {"name": "Chase Savings", "balance": 0.0},
+                {"name": "AMEX", "balance": -11.40},
+                {"name": "Chase Savings", "balance": -78.9},
             ],
         ),
         (
@@ -196,13 +196,10 @@ def test_add_new_account_to_db(
     [
         (
             # Get 2 Account Balances
-            [
-                account_name_to_id(acct_name)
-                for acct_name in ["AMEX", "Chase Savings"]
-            ],
+            [account_name_to_id(acct_name) for acct_name in ["AMEX", "Chase Savings"]],
             {
-                account_name_to_id("Chase Savings"): -1250.0,
-                account_name_to_id("AMEX"): 67.50,
+                account_name_to_id("Chase Savings"): -1_328.90,
+                account_name_to_id("AMEX"): -11.40,
             },
         ),
         (
@@ -217,8 +214,8 @@ def test_add_new_account_to_db(
                 ]
             ],
             {
-                account_name_to_id("Chase Savings"): -1250.0,
-                account_name_to_id("AMEX"): 67.50,
+                account_name_to_id("Chase Savings"): -1_328.90,
+                account_name_to_id("AMEX"): -11.40,
                 account_name_to_id("Gas for Car"): 67.50,
                 account_name_to_id("Apartment Rent"): 1250.0,
             },
@@ -226,9 +223,7 @@ def test_add_new_account_to_db(
     ],
     ids=["Get 2 Account Balances", "Get 4 Account Balances"],
 )
-def test_account_balances(
-    account_ids: list[int], expected: dict, use_test_db
-) -> None:
+def test_account_balances(account_ids: list[int], expected: dict, use_test_db) -> None:
     """Test getting the current account balances for given account IDS."""
     actual_return: dict = account_balances(account_ids=account_ids)
 
@@ -260,9 +255,7 @@ def test_account_balances(
     ],
     ids=["Valid Account Update", "Empty Account Name"],
 )
-def test_update_account_info(
-    edit_account: dict, expected: dict, use_test_db
-) -> None:
+def test_update_account_info(edit_account: dict, expected: dict, use_test_db) -> None:
     """Test udpating several transactions in the Database."""
     response: dict = update_account_info(edit_account)
     assert response == expected
@@ -272,9 +265,7 @@ def test_update_account_info(
         return
 
     with DbSetup.Session() as session:
-        updated_account: Account | None = session.get(
-            Account, edit_account["id"]
-        )
+        updated_account: Account | None = session.get(Account, edit_account["id"])
 
         for key in edit_account.keys():
             assert updated_account.__getattribute__(key) == edit_account[key]
@@ -298,9 +289,7 @@ def test_delete_account(delete_account_id: int, expected: dict, use_test_db):
 
     if result["message"] == "SUCCESS":
         with DbSetup.Session() as session:
-            deleted_account: Account | None = session.get(
-                Account, delete_account_id
-            )
+            deleted_account: Account | None = session.get(Account, delete_account_id)
 
             assert deleted_account is None
 
@@ -331,8 +320,10 @@ def test_delete_account(delete_account_id: int, expected: dict, use_test_db):
             },
         ),
     ],
-    ids=["Assets before January 1, 2023",
-         "Expense Report Jan 2023",],
+    ids=[
+        "Assets before January 1, 2023",
+        "Expense Report Jan 2023",
+    ],
 )
 def test_account_net_changes_by_group(
     account_groups: list[str],

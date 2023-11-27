@@ -7,7 +7,7 @@ from tests.test_data.account_type_test_data import ACCOUNT_TYPES
 from tests.test_data.transaction_test_data import TRANSACTIONS
 
 
-def setup_db() -> None:
+def setup_db(is_test: bool = True) -> None:
     """Create a Database and add the models (tables) to it."""
     DbSetup.add_tables()
 
@@ -32,20 +32,24 @@ def setup_db() -> None:
 
         session.commit()
 
-        for transaction in TRANSACTIONS:
-            session.add(
-                Transaction(
-                    name=transaction["name"],
-                    description=transaction["description"],
-                    amount=transaction["amount"],
-                    credit_account_id=transaction.get("credit_account_id"),
-                    debit_account_id=transaction.get("debit_account_id"),
-                    transaction_date=transaction["transaction_date"],
+        if is_test:
+            for transaction in TRANSACTIONS:
+                session.add(
+                    Transaction(
+                        name=transaction["name"],
+                        description=transaction["description"],
+                        amount=transaction["amount"],
+                        credit_account_id=transaction.get("credit_account_id"),
+                        debit_account_id=transaction.get("debit_account_id"),
+                        transaction_date=transaction["transaction_date"],
+                    )
                 )
-            )
 
-        session.commit()
+            session.commit()
 
 
 if __name__ == "__main__":
-    setup_db()
+    DbSetup.set_engine(
+        url="sqlite:///budget_book_backend/models//databases/database.db"
+    )
+    setup_db(is_test=False)

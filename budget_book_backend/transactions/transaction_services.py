@@ -1,10 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 
 from budget_book_backend.models.db_setup import DbSetup
 from budget_book_backend.models.transaction import Transaction
 from budget_book_backend.utils import dict_to_json
-from sqlalchemy import text
+from sqlalchemy import text, select
+import sqlalchemy as sqla
 
 
 def get_transactions_by_account(
@@ -49,20 +50,12 @@ def get_transactions_by_account(
 
     if categorize_type == "uncategorized":
         # Only accept those that are uncategorized
-        df = df[
-            (
-                pd.isna(df["debit_account_id"])
-                | (pd.isna(df["credit_account_id"]))
-            )
-        ]
+        df = df[(pd.isna(df["debit_account_id"]) | (pd.isna(df["credit_account_id"])))]
 
     elif categorize_type == "categorized":
         # Only accept those that are categorized
         df = df[
-            (
-                pd.notna(df["debit_account_id"])
-                & (pd.notna(df["credit_account_id"]))
-            )
+            (pd.notna(df["debit_account_id"]) & (pd.notna(df["credit_account_id"])))
         ]
 
     # Else, assume all the transactions are wanted.
@@ -106,9 +99,7 @@ def add_new_transactions(transactions: list[dict]) -> dict:
                 )
 
             except KeyError as key_err:
-                problem_transactions.append(
-                    (i, f"Missing key {str(key_err)}.")
-                )
+                problem_transactions.append((i, f"Missing key {str(key_err)}."))
             except Exception as e:
                 problem_transactions.append((i, str(e)))
 
@@ -118,9 +109,7 @@ def add_new_transactions(transactions: list[dict]) -> dict:
     message: str = "SUCCESS"
 
     if len(problem_transactions) != 0:
-        message = (
-            "There were some errors processing the following transactions:"
-        )
+        message = "There were some errors processing the following transactions:"
 
         for idx, problem in problem_transactions:
             message += f"\n{idx}: {problem}"
@@ -165,9 +154,7 @@ def categorize_transactions(transactions: list[dict]) -> dict:
                 session.commit()
 
             except KeyError as key_err:
-                problem_transactions.append(
-                    (i, f"Missing key {str(key_err)}.")
-                )
+                problem_transactions.append((i, f"Missing key {str(key_err)}."))
 
             except Exception as e:
                 problem_transactions.append((i, str(e)))
@@ -175,9 +162,7 @@ def categorize_transactions(transactions: list[dict]) -> dict:
     message: str = "SUCCESS"
 
     if len(problem_transactions) != 0:
-        message = (
-            "There were some errors processing the following transactions:"
-        )
+        message = "There were some errors processing the following transactions:"
 
         for idx, problem in problem_transactions:
             message += f"\n{idx}: {problem}"
@@ -220,17 +205,17 @@ def update_transactions(transactions: list[dict]) -> dict:
 
                 transaction.amount = trxn.get("amount", transaction.amount)
 
-                transaction.debit_account_id = trxn.get(
+                sent_debit_account_id = trxn.get(
                     "debit_account_id", transaction.debit_account_id
                 )
-                if transaction.debit_account_id == "undefined":
-                    transaction.debit_account_id = None
+                if sent_debit_account_id != "undefined":
+                    transaction.debit_account_id = sent_debit_account_id
 
-                transaction.credit_account_id = trxn.get(
+                sent_credit_account_id = trxn.get(
                     "credit_account_id", transaction.credit_account_id
                 )
-                if transaction.credit_account_id == "undefined":
-                    transaction.credit_account_id = None
+                if sent_credit_account_id != "undefined":
+                    transaction.credit_account_id = sent_credit_account_id
 
                 transaction_date: str | None = trxn.get("transaction_date")
 
@@ -251,9 +236,7 @@ def update_transactions(transactions: list[dict]) -> dict:
     message: str = "SUCCESS"
 
     if len(problem_transactions) != 0:
-        message = (
-            "There were some errors processing the following transactions:"
-        )
+        message = "There were some errors processing the following transactions:"
 
         for idx, problem in problem_transactions:
             message += f"\n{idx}: {problem}"
@@ -297,11 +280,74 @@ def remove_transactions(transaction_ids: list[int]) -> dict:
     message: str = "SUCCESS"
 
     if len(problem_transactions) != 0:
-        message = (
-            "There were some errors processing the following transactions:"
-        )
+        message = "There were some errors processing the following transactions:"
 
         for idx, problem in problem_transactions:
             message += f"\n{idx}: {problem}"
 
     return dict(message=message)
+
+
+def find_matches(
+    transaction_id: int, uncategorized_only: bool = True, day_threshold: int = 2
+) -> dict:
+    """Find the potential matches for a given transaction. This includes
+    finding the corresponding transaction across 2 accounts.
+    For example,
+        Checking Account credit -> Payment to Credit card
+    would also show up as
+        Credit Card debit -> Payment from Checking
+
+    Parameters
+    ----------
+        transaction_id (int) : The transaction ID to find the matches
+            or duplicates of.
+        uncategorized_only (bool) : Optional. Whether or not to consider
+            only the uncategorized transactions.
+        day_threshold (int) : Optional. How many days to consider when
+            trying to find similar transaction dates.
+
+    Returns
+    -------
+        (dict) : Dictionary containing a message whether matches were
+            found and a list of transaction IDs that match.
+    """
+    with DbSetup.Session() as session:
+        transaction: Transaction | None = session.get(Transaction, transaction_id)
+
+        if transaction is None:
+            raise Exception(f"Transaciton with id {transaction_id} could not be found.")
+
+        t_date: datetime = transaction.transaction_date  # type: ignore
+
+        if uncategorized_only:
+            matching_query = select(Transaction.id).where(
+                Transaction.amount == transaction.amount,
+                Transaction.id != transaction.id,
+                sqla.or_(
+                    Transaction.credit_account_id == None,
+                    Transaction.debit_account_id == None,
+                ),
+                Transaction.transaction_date.between(
+                    t_date - timedelta(days=day_threshold),
+                    t_date + timedelta(days=day_threshold),
+                ),
+            )
+        else:
+            matching_query = select(Transaction.id).where(
+                Transaction.amount == transaction.amount,
+                Transaction.id != transaction.id,
+                Transaction.transaction_date.between(
+                    t_date - timedelta(days=day_threshold),
+                    t_date + timedelta(days=day_threshold),
+                ),
+            )
+
+        matching_transaction_ids = session.execute(matching_query).scalars().all()
+
+    if not matching_transaction_ids:
+        return dict(message="No matching transactions found", transaction_ids=[])
+
+    return dict(
+        message="Matching transactions found!", transaction_ids=matching_transaction_ids
+    )

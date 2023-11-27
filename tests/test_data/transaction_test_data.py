@@ -66,9 +66,19 @@ rent_payment = dict(
     transaction_date=datetime(2023, 3, 1),
 )
 
+credit_card_payment = dict(
+    name="Credit Card Payment",
+    description="Pay off credit card",
+    amount=78.90,
+    debit_account_id=account_name_to_id("AMEX"),
+    credit_account_id=account_name_to_id("Chase Savings"),
+    transaction_date=datetime(2023, 2, 24),
+)
+
 TRANSACTIONS: list[dict] = [
     uncategorized_one,
     uncategorized_payment,
     gas_payment,
     rent_payment,
+    credit_card_payment,
 ]
